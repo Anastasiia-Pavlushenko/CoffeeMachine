@@ -1,18 +1,98 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace CoffeeMachine
 {
     enum Drink : byte // Drinks names with prices
     {
-        Espresso = 12,
-        Americano = 15,
-        Irish = 16,
-        Latte = 20,
-        Capucino = 18
+        Espresso,
+        Americano,
+        Irish,
+        Latte,
+        Cappuccino
     }
 
     class CoffeeMachine
     {
+        private class Recipe
+        {
+            public Recipe(float price, ushort coffee, ushort milk, ushort water, ushort sugar)
+            {
+                Price = price;
+                Coffee = coffee;
+                Milk = milk;
+                Water = water;
+                Sugar = sugar;
+            }
+
+            public float Price
+            {
+                get
+                {
+                    return Price;
+                }
+
+                private set
+                {
+                    Price = value;
+                }
+            }
+
+            public ushort Coffee
+            {
+                get
+                {
+                    return Coffee;
+                }
+
+                private set
+                {
+                    Coffee = value;
+                }
+            }
+
+            public ushort Milk
+            {
+                get
+                {
+                    return Milk;
+                }
+
+                private set
+                {
+                    Milk = value;
+                }
+            }
+
+            public ushort Water
+            {
+                get
+                {
+                    return Water;
+                }
+
+                private set
+                {
+                    Water = value;
+                }
+            }
+
+            public ushort Sugar
+            {
+                get
+                {
+                    return Sugar;
+                }
+
+                private set
+                {
+                    Sugar = value;
+                }
+            }
+        }
+
+        private Dictionary<Drink, Recipe> recipes; //TODO: Use initialization
+
         public string Model
         {
             get
@@ -23,9 +103,9 @@ namespace CoffeeMachine
             private set
             {
                 if (value.Length == 0)
-                    throw new ArgumentNullException();
+                    throw new ArgumentNullException("Empty model name");
                 if (value.IndexOf(' ') != -1) // string has space char
-                    throw new ArgumentException();
+                    throw new ArgumentException("Model name must have no spaces");
                 Model = value;
             }
         }
@@ -42,7 +122,7 @@ namespace CoffeeMachine
             private set
             {
                 if (value > coffee_max || value < 0)
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("Invalid value for coffee portions amount");
                 Coffee = value;
             }
         }
@@ -57,7 +137,7 @@ namespace CoffeeMachine
             private set
             {
                 if (value > milk_max || value < 0)
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("Invalid value for milk portions amount");
                 Milk = value;
             }
         }
@@ -72,7 +152,7 @@ namespace CoffeeMachine
             private set
             {
                 if (value > water_max || value < 0)
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("Invalid value for water portions amount");
                 Water = value;
             }
         }
@@ -87,7 +167,7 @@ namespace CoffeeMachine
             private set
             {
                 if (value > sugar_max || value < 0)
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("Invalid value for sugar portions amount");
                 Sugar = value;
             }
         }
@@ -102,7 +182,7 @@ namespace CoffeeMachine
             private set
             {
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("Cashbox cannot hold a negative amount of money");
                 Cashbox = value;
             }
         }
@@ -116,42 +196,59 @@ namespace CoffeeMachine
             this.water_max = water_max;
             this.sugar_max = sugar_max;
 
-            //Empty by default
+            //Empty containers by default
             Coffee = 0;
             Milk = 0;
             Water = 0;
             Sugar = 0;
             Cashbox = 0;
+
+            //Filling recipes
+            recipes.Add(Drink.Americano, new Recipe(15, 1, 0, 3, 1));
+            recipes.Add(Drink.Cappuccino, new Recipe(18, 1, 2, 1, 2));
+            recipes.Add(Drink.Espresso, new Recipe(12, 1, 0, 1, 1));
+            recipes.Add(Drink.Irish, new Recipe(16, 1, 1, 1, 2));
+            recipes.Add(Drink.Latte, new Recipe(20, 1, 2, 1, 2));
+        }
+
+        private bool ResourcesEnough(Drink drink)
+        {
+            Recipe rec = recipes[drink];
+            return (rec.Coffee >= Coffee &&
+                rec.Milk >= Milk &&
+                rec.Water >= Water &&
+                rec.Sugar >= Sugar);
+        }
+
+        private void UseResources(Drink drink)
+        {
+            if (ResourcesEnough(drink))
+                throw new ArgumentException("Not enough resources");
+            Recipe rec = recipes[drink];
+            Coffee -= rec.Coffee;
+            Milk -= rec.Milk;
+            Water -= rec.Water;
+            Sugar -= rec.Sugar;
         }
 
         public float PrepareDrink(Drink select, float payment) // Returns change
         {
-            if (payment < (byte)select) // Payment less than price of selected drink
+            Recipe rec = recipes[select];
+            if (payment < rec.Price)
             {
-                Console.WriteLine("Payment not paid.");
+                Console.WriteLine($"[select] not paid.");
                 return payment;
             }
 
-            switch(select)
+            if (!ResourcesEnough(select))
             {
-                case Drink.Americano:
-                    //TODO: Handle the Americano prepare: whether resources in the coffee machine enough and charge
-                    break;
-                case Drink.Capucino:
-                    //TODO: Handle the Capucino prepare
-                    break;
-                case Drink.Espresso:
-                    //TODO: Handle the Espresso prepare
-                    break;
-                case Drink.Irish:
-                    //TODO: Handle the Irish prepare
-                    break;
-                case Drink.Latte:
-                    //TODO: Handle the Latte prepare
-                    break;
-                default: // Invalid select of drink
-                    throw new ArgumentOutOfRangeException();
+                Console.WriteLine($"Sorry! [Model] have not enough resouces for your coffee.");
+                return payment;
             }
+
+            UseResources(select);
+
+            payment -= rec.Price;
 
             return payment;
         }
