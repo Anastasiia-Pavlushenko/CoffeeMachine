@@ -296,6 +296,13 @@ namespace CoffeeMachine
         {
             Sugar = sugar_max;
         }
+
+        public float WithdrawCashbox()
+        {
+            var rv = Cashbox;
+            Cashbox = 0;
+            return rv;
+        }
     }
     
     class Program
