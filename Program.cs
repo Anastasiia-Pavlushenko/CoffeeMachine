@@ -277,6 +277,25 @@ namespace CoffeeMachine
             return payment;
         }
 
+        public void FillCoffeeTank()
+        {
+            Coffee = coffee_max;
+        }
+
+        public void FillMilkTank()
+        {
+            Milk = milk_max;
+        }
+
+        public void FillWaterTank()
+        {
+            Water = water_max;
+        }
+
+        public void FillSugarTank()
+        {
+            Sugar = sugar_max;
+        }
     }
     
     class Program
