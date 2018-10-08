@@ -211,24 +211,37 @@ namespace CoffeeMachine
             recipes.Add(Drink.Latte, new Recipe(20, 1, 2, 1, 2));
         }
 
-        private bool ResourcesEnough(Drink drink)
+        private bool ResourcesEnough(Drink select)
         {
-            Recipe rec = recipes[drink];
-            return (rec.Coffee >= Coffee &&
-                rec.Milk >= Milk &&
-                rec.Water >= Water &&
-                rec.Sugar >= Sugar);
+            Recipe rec = recipes[select];
+            return (rec.Coffee <= Coffee &&
+                rec.Milk <= Milk &&
+                rec.Water <= Water &&
+                rec.Sugar <= Sugar);
         }
 
-        private void UseResources(Drink drink)
+        private void UseResources(Drink select)
         {
-            if (ResourcesEnough(drink))
-                throw new ArgumentException("Not enough resources");
-            Recipe rec = recipes[drink];
+            if (ResourcesEnough(select))
+                throw new ArgumentException("Not enough resources to use");
+            Recipe rec = recipes[select];
             Coffee -= rec.Coffee;
             Milk -= rec.Milk;
             Water -= rec.Water;
             Sugar -= rec.Sugar;
+        }
+
+        private void TanksFillingNotification(Drink select)
+        {
+            Recipe rec = recipes[select];
+            if (rec.Coffee > Coffee)
+                Console.WriteLine("Please fill the tank with coffee!");
+            if (rec.Milk > Milk)
+                Console.WriteLine("Please fill the tank with milk!");
+            if (rec.Water > Water)
+                Console.WriteLine("Please fill the tank with water!");
+            if (rec.Sugar > Sugar)
+                Console.WriteLine("Please fill the tank with coffee!");
         }
 
         public float PrepareDrink(Drink select, float payment) // Returns change
@@ -243,6 +256,7 @@ namespace CoffeeMachine
             if (!ResourcesEnough(select))
             {
                 Console.WriteLine($"Sorry! [Model] have not enough resouces for your coffee.");
+                TanksFillingNotification(select);
                 return payment;
             }
 
