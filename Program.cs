@@ -25,79 +25,85 @@ namespace CoffeeMachine
                 Sugar = sugar;
             }
 
+            private float price;
             public float Price
             {
                 get
                 {
-                    return Price;
+                    return price;
                 }
 
                 private set
                 {
-                    Price = value;
+                    price = value;
                 }
             }
 
+            private ushort coffee;
             public ushort Coffee
             {
                 get
                 {
-                    return Coffee;
+                    return coffee;
                 }
 
                 private set
                 {
-                    Coffee = value;
+                    coffee = value;
                 }
             }
 
+            private ushort milk;
             public ushort Milk
             {
                 get
                 {
-                    return Milk;
+                    return milk;
                 }
 
                 private set
                 {
-                    Milk = value;
+                    milk = value;
                 }
             }
 
+            private ushort water;
             public ushort Water
             {
                 get
                 {
-                    return Water;
+                    return water;
                 }
 
                 private set
                 {
-                    Water = value;
+                    water = value;
                 }
             }
 
+            private ushort sugar;
             public ushort Sugar
             {
                 get
                 {
-                    return Sugar;
+                    return sugar;
                 }
 
                 private set
                 {
-                    Sugar = value;
+                    sugar = value;
                 }
             }
         }
 
-        private Dictionary<Drink, Recipe> recipes; //TODO: Use initialization
+        private Dictionary<Drink, Recipe> recipes;
 
+        private string model;
         public string Model
         {
             get
             {
-                return Model;
+                return model;
             }
 
             private set
@@ -106,89 +112,92 @@ namespace CoffeeMachine
                     throw new ArgumentNullException("Empty model name");
                 if (value.IndexOf(' ') != -1) // string has space char
                     throw new ArgumentException("Model name must have no spaces");
-                Model = value;
+                model = value;
             }
         }
 
-        private ushort coffee_max, milk_max, water_max, sugar_max;
-
+        private ushort coffee, coffee_max;
         public ushort Coffee
         {
             get
             {
-                return Coffee;
+                return coffee;
             }
 
             private set
             {
                 if (value > coffee_max || value < 0)
                     throw new ArgumentOutOfRangeException("Invalid value for coffee portions amount");
-                Coffee = value;
+                coffee = value;
             }
         }
 
+        private ushort milk, milk_max;
         public ushort Milk
         {
             get
             {
-                return Milk;
+                return milk;
             }
 
             private set
             {
                 if (value > milk_max || value < 0)
                     throw new ArgumentOutOfRangeException("Invalid value for milk portions amount");
-                Milk = value;
+                milk = value;
             }
         }
 
+        private ushort water, water_max;
         public ushort Water
         {
             get
             {
-                return Water;
+                return water;
             }
 
             private set
             {
                 if (value > water_max || value < 0)
                     throw new ArgumentOutOfRangeException("Invalid value for water portions amount");
-                Water = value;
+                water = value;
             }
         }
 
+        private ushort sugar, sugar_max;
         public ushort Sugar
         {
             get
             {
-                return Sugar;
+                return sugar;
             }
 
             private set
             {
                 if (value > sugar_max || value < 0)
                     throw new ArgumentOutOfRangeException("Invalid value for sugar portions amount");
-                Sugar = value;
+                sugar = value;
             }
         }
 
+        private float cashbox;
         public float Cashbox
         {
             get
             {
-                return Cashbox;
+                return cashbox;
             }
 
             private set
             {
                 if (value < 0)
                     throw new ArgumentOutOfRangeException("Cashbox cannot hold a negative amount of money");
-                Cashbox = value;
+                cashbox = value;
             }
         }
 
-        
-        CoffeeMachine(string model, ushort coffee_max, ushort milk_max, ushort water_max, ushort sugar_max)
+
+        public CoffeeMachine(string model, ushort coffee_max, ushort milk_max, ushort water_max, ushort sugar_max)
         {
             Model = model;
             this.coffee_max = coffee_max;
@@ -204,11 +213,14 @@ namespace CoffeeMachine
             Cashbox = 0;
 
             //Filling recipes
-            recipes.Add(Drink.Americano, new Recipe(15, 1, 0, 3, 1));
-            recipes.Add(Drink.Cappuccino, new Recipe(18, 1, 2, 1, 2));
-            recipes.Add(Drink.Espresso, new Recipe(12, 1, 0, 1, 1));
-            recipes.Add(Drink.Irish, new Recipe(16, 1, 1, 1, 2));
-            recipes.Add(Drink.Latte, new Recipe(20, 1, 2, 1, 2));
+            var recipes = new Dictionary<Drink, Recipe>
+            {
+                { Drink.Americano, new Recipe(15, 1, 0, 3, 1) },
+                { Drink.Cappuccino, new Recipe(18, 1, 2, 1, 2) },
+                { Drink.Espresso, new Recipe(12, 1, 0, 1, 1) },
+                { Drink.Irish, new Recipe(16, 1, 1, 1, 2) },
+                { Drink.Latte, new Recipe(20, 1, 2, 1, 2) }
+            };
         }
 
         private bool ResourcesEnough(Drink select)
@@ -269,7 +281,7 @@ namespace CoffeeMachine
 
         public float PrepareSomeDrinks(Drink[] select, float payment)
         {
-            foreach ( Drink d in select )
+            foreach (Drink d in select)
             {
                 payment = PrepareDrink(d, payment);
             }
@@ -299,17 +311,44 @@ namespace CoffeeMachine
 
         public float WithdrawCashbox()
         {
-            var rv = Cashbox;
+            float rv = Cashbox;
             Cashbox = 0;
             return rv;
         }
     }
-    
+
     class Program
-    {
+    {   
         static void Main(string[] args)
         {
-            //TODO: Tests of use of the coffee machine
+            UnitTest.TestCase_EmptyTanks();
         }
     }
+
+    public static class UnitTest
+    {
+        private static class Require
+        {
+            public static void That(bool expression, string exceptionMessage = "")
+            {
+                if (!expression) throw new InvalidProgramException(exceptionMessage);
+            }
+        }
+
+        public static void TestCase_EmptyTanks()
+        {
+            // Preparation:
+            var cm = new CoffeeMachine("Nescafe", 10, 10, 10, 10);
+
+            // Expectation:
+            Require.That(cm.Coffee == 0, "Coffee tank is not empty.");
+            Require.That(cm.Milk == 0, "Milk tank is not empty.");
+            Require.That(cm.Water == 0, "Water tank is not empty.");
+            Require.That(cm.Sugar == 0, "Sugar tank is not empty.");
+        }
+
+        //TODO: Add more test cases using Requre.That()
+    }
+
+    
 }
