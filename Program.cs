@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CoffeeMachine
 {
-    enum Drink : byte // Drinks names with prices
+    enum Drink : byte
     {
         Espresso,
         Americano,
@@ -181,14 +181,14 @@ namespace CoffeeMachine
         }
 
         private float cashbox;
-        public float Cashbox
+        private float Cashbox
         {
             get
             {
                 return cashbox;
             }
 
-            private set
+            set
             {
                 if (value < 0)
                     throw new ArgumentOutOfRangeException("Cashbox cannot hold a negative amount of money");
@@ -213,7 +213,7 @@ namespace CoffeeMachine
             Cashbox = 0;
 
             //Filling recipes
-            var recipes = new Dictionary<Drink, Recipe>
+            recipes = new Dictionary<Drink, Recipe>
             {
                 { Drink.Americano, new Recipe(15, 1, 0, 3, 1) },
                 { Drink.Cappuccino, new Recipe(18, 1, 2, 1, 2) },
@@ -234,7 +234,7 @@ namespace CoffeeMachine
 
         private void UseResources(Drink select)
         {
-            if (ResourcesEnough(select))
+            if (!ResourcesEnough(select))
                 throw new ArgumentException("Not enough resources to use");
             Recipe rec = recipes[select];
             Coffee -= rec.Coffee;
@@ -253,10 +253,10 @@ namespace CoffeeMachine
             if (rec.Water > Water)
                 Console.WriteLine("Please fill the tank with water!");
             if (rec.Sugar > Sugar)
-                Console.WriteLine("Please fill the tank with coffee!");
+                Console.WriteLine("Please fill the tank with sugar!");
         }
 
-        public float PrepareDrink(Drink select, float payment) // Returns change
+        public float MakeDrink(Drink select, float payment) // Returns change
         {
             Recipe rec = recipes[select];
             if (payment < rec.Price)
@@ -274,16 +274,17 @@ namespace CoffeeMachine
 
             UseResources(select);
 
+            Cashbox += rec.Price;
             payment -= rec.Price;
 
             return payment;
         }
 
-        public float PrepareSomeDrinks(Drink[] select, float payment)
+        public float MakeSomeDrinks(Drink[] select, float payment)
         {
             foreach (Drink d in select)
             {
-                payment = PrepareDrink(d, payment);
+                payment = MakeDrink(d, payment);
             }
 
             return payment;
@@ -322,6 +323,24 @@ namespace CoffeeMachine
         static void Main(string[] args)
         {
             UnitTest.TestCase_EmptyTanks();
+            UnitTest.TestCase_FilledTanks();
+
+            UnitTest.TestCase_MakeAmericano();
+            UnitTest.TestCase_MakeCappuccino();
+            UnitTest.TestCase_MakeEspresso();
+            UnitTest.TestCase_MakeIrish();
+            UnitTest.TestCase_MakeLatte();
+
+            UnitTest.TestCase_MakeThreeDrinks();
+            UnitTest.TestCase_MakeDrinksNotEnoughMoney();
+
+            UnitTest.TestCase_EmptyModelName();
+            UnitTest.TestCase_ModelNameWithSpace();
+
+            UnitTest.TestCase_NotEnoughResources();
+
+            UnitTest.TestCase_WithdrawEmptyCashbox();
+            UnitTest.TestCase_WithdrawCashbox();
         }
     }
 
@@ -333,6 +352,16 @@ namespace CoffeeMachine
             {
                 if (!expression) throw new InvalidProgramException(exceptionMessage);
             }
+        }
+
+        private static CoffeeMachine CreateFilledCoffeeMachine()
+        {
+            var cm = new CoffeeMachine("Nescafe", 10, 10, 10, 10);
+            cm.FillCoffeeTank();
+            cm.FillMilkTank();
+            cm.FillWaterTank();
+            cm.FillSugarTank();
+            return cm;
         }
 
         public static void TestCase_EmptyTanks()
@@ -347,8 +376,186 @@ namespace CoffeeMachine
             Require.That(cm.Sugar == 0, "Sugar tank is not empty.");
         }
 
-        //TODO: Add more test cases using Requre.That()
-    }
+        public static void TestCase_FilledTanks()
+        {
+            var cm = new CoffeeMachine("Nescafe", 10, 10, 10, 10);
 
-    
+            cm.FillCoffeeTank();
+            Require.That(cm.Coffee == 10, "Coffee tank is not filled.");
+
+            cm.FillMilkTank();
+            Require.That(cm.Milk == 10, "Milk tank is not filled.");
+
+            cm.FillWaterTank();
+            Require.That(cm.Water == 10, "Water tank is not filled.");
+
+            cm.FillSugarTank();
+            Require.That(cm.Sugar == 10, "Sugar tank is not filled.");
+        }
+
+        public static void TestCase_MakeAmericano()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+
+            cash = cm.MakeDrink(Drink.Americano, cash);
+
+            Require.That(cash == 35, "Uncorrect payment.");
+            Require.That(cm.Coffee == 9, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 10, "Uncorrect milk using.");
+            Require.That(cm.Water == 7, "Uncorrect water using.");
+            Require.That(cm.Sugar == 9, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_MakeCappuccino()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+
+            cash = cm.MakeDrink(Drink.Cappuccino, cash);
+
+            Require.That(cash == 32, "Uncorrect payment.");
+            Require.That(cm.Coffee == 9, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 8, "Uncorrect milk using.");
+            Require.That(cm.Water == 9, "Uncorrect water using.");
+            Require.That(cm.Sugar == 8, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_MakeEspresso()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+
+            cash = cm.MakeDrink(Drink.Espresso, cash);
+
+            Require.That(cash == 38, "Uncorrect payment.");
+            Require.That(cm.Coffee == 9, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 10, "Uncorrect milk using.");
+            Require.That(cm.Water == 9, "Uncorrect water using.");
+            Require.That(cm.Sugar == 9, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_MakeIrish()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+
+            cash = cm.MakeDrink(Drink.Irish, cash);
+
+            Require.That(cash == 34, "Uncorrect payment.");
+            Require.That(cm.Coffee == 9, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 9, "Uncorrect milk using.");
+            Require.That(cm.Water == 9, "Uncorrect water using.");
+            Require.That(cm.Sugar == 8, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_MakeLatte()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+
+            cash = cm.MakeDrink(Drink.Latte, cash);
+
+            Require.That(cash == 30, "Uncorrect payment.");
+            Require.That(cm.Coffee == 9, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 8, "Uncorrect milk using.");
+            Require.That(cm.Water == 9, "Uncorrect water using.");
+            Require.That(cm.Sugar == 8, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_MakeThreeDrinks()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+            Drink[] order = { Drink.Espresso, Drink.Latte, Drink.Irish };
+
+            cash = cm.MakeSomeDrinks(order, cash);
+
+            Require.That(cash == 50 - 12 - 20 - 16, "Uncorrect payment.");
+            Require.That(cm.Coffee == 7, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 7, "Uncorrect milk using.");
+            Require.That(cm.Water == 7, "Uncorrect water using.");
+            Require.That(cm.Sugar == 5, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_MakeDrinksNotEnoughMoney()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 40.0F;
+            Drink[] order = { Drink.Americano, Drink.Cappuccino, Drink.Espresso };
+
+            cash = cm.MakeSomeDrinks(order, cash); // Makes only first two drinks
+
+            Require.That(cash == 40 - 15 - 18, "Uncorrect payment.");
+            Require.That(cm.Coffee == 8, "Uncorrect coffee using.");
+            Require.That(cm.Milk == 8, "Uncorrect milk using.");
+            Require.That(cm.Water == 6, "Uncorrect water using.");
+            Require.That(cm.Sugar == 7, "Uncorrect sugar using.");
+        }
+
+        public static void TestCase_EmptyModelName()
+        {
+            bool catched = false;
+
+            try
+            {
+                var cm = new CoffeeMachine("", 10, 10, 10, 10);
+            }
+            catch (Exception)
+            {
+                catched = true;
+            }
+
+            Require.That(catched);
+        }
+
+        public static void TestCase_ModelNameWithSpace()
+        {
+            bool catched = false;
+
+            try
+            {
+                var cm = new CoffeeMachine("Mama Mia", 10, 10, 10, 10);
+            }
+            catch (Exception)
+            {
+                catched = true;
+            }
+
+            Require.That(catched);
+        }
+
+        public static void TestCase_NotEnoughResources()
+        {
+            var cm = new CoffeeMachine("Nescafe", 10, 10, 10, 10);
+            float cash = 50.0F;
+
+            cash = cm.MakeDrink(Drink.Americano, cash);
+
+            Require.That(cash == 50);
+        }
+
+        public static void TestCase_WithdrawEmptyCashbox()
+        {
+            var cm = CreateFilledCoffeeMachine();
+
+            float profit = cm.WithdrawCashbox();
+
+            Require.That(profit == 0);
+        }
+
+        public static void TestCase_WithdrawCashbox()
+        {
+            var cm = CreateFilledCoffeeMachine();
+            float cash = 50.0F;
+            Drink[] order = { Drink.Espresso, Drink.Latte, Drink.Irish };
+
+            cash = cm.MakeSomeDrinks(order, cash);
+
+            float profit = cm.WithdrawCashbox();
+
+            Require.That(cash == 2);
+            Require.That(profit == 48);
+        }
+    }
 }
